@@ -7,7 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/17NkK1YC5XyR1i34mO28JEAz8vA8yYq6q
 """
 
-%%writefile app.py
 import streamlit as st 
 from PIL import Image
 import pickle
