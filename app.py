@@ -7,6 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/17NkK1YC5XyR1i34mO28JEAz8vA8yYq6q
 """
 
+%%writefile app.py
 import streamlit as st 
 from PIL import Image
 import pickle
@@ -15,59 +16,100 @@ import matplotlib.pyplot as plt
 import pandas as pd
 st.set_option('deprecation.showfileUploaderEncoding', False)
 # Load the pickled model
-model = pickle.load(open('logisticmodel.pkl', 'rb')) 
-# Feature Scaling
-dataset = pd.read_csv('Social_Network_Ads.csv')
-# Extracting independent variable:
-X = dataset.iloc[:, [1,2,3]].values
-# Encoding the Independent Variable
-from sklearn.preprocessing import LabelEncoder
-labelencoder_X = LabelEncoder()
-X[:, 0] = labelencoder_X.fit_transform(X[:, 0])
-from sklearn.preprocessing import StandardScaler
-sc = StandardScaler()
-X = sc.fit_transform(X)
-def predict_note_authentication(UserID, Gender,Age,EstimatedSalary):
-  output= model.predict(sc.transform([[Gender,Age,EstimatedSalary]]))
-  print("Purchased", output)
-  if output==[1]:
-    prediction="Item will be purchased"
+model = pickle.load(open('mlmodelnlp.pkl','rb'))   
+
+
+def review(text):
+  dataset = pd.read_csv('NLP dataset2.csv', quoting=3)
+  # First step: cleaning Text and removing number and punctuation marks.
+  # Cleaning the texts for all review using for loop
+  import re
+  import nltk
+  nltk.download('stopwords')
+  from nltk.corpus import stopwords
+  from nltk.stem.porter import PorterStemmer
+  corpus = []
+  for i in range(0, 479):
+    review = re.sub('[^a-zA-Z]', ' ', dataset['text'][i])
+    review = review.lower()
+    review = review.split()
+    ps = PorterStemmer()
+    review = [ps.stem(word) for word in review if not word in set(stopwords.words('english'))]
+    review = ' '.join(review)
+    #print(review)
+    corpus.append(review)
+  # Creating the Bag of Words model
+  from sklearn.feature_extraction.text import CountVectorizer
+  cv = CountVectorizer(max_features = 1500)
+  #print(cv)
+  X = cv.fit_transform(corpus).toarray()
+  import re
+  review = re.sub('[^a-zA-Z]', ' ', text)
+  review=review.lower()
+  print(review)
+  # Third step: Removing stop words like 'this, the'
+  import nltk
+  nltk.download('stopwords')
+  from nltk.corpus import stopwords
+  review = review.split()
+  print(review)
+  # Third step: Removing stop words like 'this, the'
+   # set function is generally used for long article to fastem process
+  review1 = [word for word in review if not word in set(stopwords.words('english'))]
+  print(review1)
+  # Fourth step: converting stemming words
+  from nltk.stem.porter import PorterStemmer
+  ps = PorterStemmer()
+  review = [ps.stem(word) for word in review1 if not word in set(stopwords.words('english'))]
+  print(review)
+  # joining these words of list
+  review2 = ' '.join(review)
+  print(review2)
+  # Creating the Bag of Words model
+  
+  X = cv.transform(review).toarray()
+  input_pred = model.predict(X)
+  input_pred = input_pred.astype(int)
+  print(input_pred)
+  if input_pred[0]==1:
+    result= "Review is Positive"
   else:
-    prediction="Item will not be purchased"
-  print(prediction)
-  return prediction
-def main():
+    result="Review is negative" 
+
+ 
     
-    html_temp = """
-   <div class="" style="background-color:Brown;" >
+  return result
+html_temp = """
+   <div class="" style="background-color:green;" >
    <div class="clearfix">           
    <div class="col-md-12">
-   <center><p style="font-size:40px;color:black;margin-top:10px;">Poornima Institute of Engineering & Technology</p></center> 
-   <center><p style="font-size:30px;color:black;margin-top:10px;">Department of Computer Engineering</p></center> 
-   <center><p style="font-size:25px;color:black;margin-top:10px;"Machine Learning Lab Experiment</p></center> 
+   <center><p style="font-size:40px;color:white;margin-top:10px;">Poornima Institute of Engineering & Technology</p></center> 
+   <center><p style="font-size:30px;color:white;margin-top:10px;">Department of Computer Engineering</p></center> 
+   <center><p style="font-size:25px;color:white;margin-top:10px;"Machine Learning Lab II Midterm Examination</p></center> 
    </div>
    </div>
    </div>
    """
-    st.markdown(html_temp,unsafe_allow_html=True)
-    st.header("Item Purchase Prediction using Logistic Classification")
-    
-    UserID = st.text_input("UserID","")
-    
-    #Gender1 = st.select_slider('Select a Gender Male:1 Female:0',options=['1', '0'])
-    Gender1 = st.number_input('Insert Gender Male:1 Female:0')
-    Age = st.number_input('Insert a Age',18,60)
-   
-    EstimatedSalary = st.number_input("Insert Estimated Salary",15000,150000)
-    resul=""
-    if st.button("Predict"):
-      result=predict_note_authentication(UserID, Gender1,Age,EstimatedSalary)
-      st.success('Model has predicted {}'.format(result))
+st.markdown(html_temp,unsafe_allow_html=True)
+st.header("NLP Review System ")
+  
+  
+text = st.text_area("Write Your Reviews")
+
+if st.button("Review Analysis"):
+  result=review(text)
+  st.success('Model has predicted {}'.format(result))
       
-    if st.button("About"):
-      st.subheader("Developed by Deepak Moud")
-      st.subheader("Head , Department of Computer Engineering")
-
-if __name__=='__main__':
-  main()
-
+if st.button("About"):
+  st.subheader("Ayush Jain, PIET Jaipur")
+  
+html_temp = """
+   <div class="" style="background-color:blue;" >
+   <div class="clearfix">           
+   <div class="col-md-12">
+   <center><p style="font-size:20px;color:white;margin-top:10px;">Machine learning Midterm Experiment NLP</p></center> 
+   </div>
+   </div>
+   </div>
+   """
+st.markdown(html_temp,unsafe_allow_html=True)
